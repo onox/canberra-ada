@@ -157,6 +157,39 @@ package body Canberra is
       end loop;
    end Play;
 
+   procedure Play_Internal
+     (Object         : in out Context;
+      Property_Name  : String;
+      Property_Value : String;
+      Kind           : Role;
+      Name           : String;
+      The_Sound      : out Sound)
+   is
+      Error : API.Error_Code;
+
+      use type API.Error_Code;
+   begin
+      Error := API.Play (Object.Handle, Object.Next_ID,
+        Interfaces.C.To_C (Property_Name),
+        Interfaces.C.To_C (Property_Value),
+        Interfaces.C.To_C ("media.role"),
+        Interfaces.C.To_C (case Kind is
+                             when Event => "event",
+                             when Music => "music"),
+        Interfaces.C.To_C ("media.name"),
+        Interfaces.C.To_C (if Name'Length > 0 then Name else Property_Value),
+        System.Null_Address);
+
+      if Error = API.Error_Not_Found then
+         raise Not_Found_Error with Property_Value;
+      end if;
+
+      Raise_Error_If_No_Success (Error);
+
+      The_Sound := (Object.Handle, Object.Next_ID);
+      Object.Next_ID := Object.Next_ID + 1;
+   end Play_Internal;
+
    procedure Play
      (Object      : in out Context;
       Event_ID    : String;
@@ -164,30 +197,32 @@ package body Canberra is
       Kind        : Role   := Event;
       Name        : String := "")
    is
-      Error : API.Error_Code;
-
-      use type API.Error_Code;
    begin
-      Error := API.Play (Object.Handle, Object.Next_ID,
-        Interfaces.C.To_C ("event.id"),
-        Interfaces.C.To_C (Event_ID),
-        Interfaces.C.To_C ("media.role"),
-        Interfaces.C.To_C (case Kind is
-                             when Event => "event",
-                             when Music => "music"),
-        Interfaces.C.To_C ("media.name"),
-        Interfaces.C.To_C (if Name'Length > 0 then Name else Event_ID),
-        System.Null_Address);
-
-      if Error = API.Error_Not_Found then
-         raise Event_Not_Found_Error with Event_ID;
-      end if;
-
-      Raise_Error_If_No_Success (Error);
-
-      Event_Sound := (Object.Handle, Object.Next_ID);
-      Object.Next_ID := Object.Next_ID + 1;
+      Play_Internal
+        (Object         => Object,
+         Property_Name  => "event.id",
+         Property_Value => Event_ID,
+         Kind           => Kind,
+         Name           => Name,
+         The_Sound      => Event_Sound);
    end Play;
+
+   procedure Play_File
+     (Object      : in out Context;
+      Filename    : String;
+      File_Sound  : out Sound;
+      Kind        : Role   := Event;
+      Name        : String := "")
+   is
+   begin
+      Play_Internal
+        (Object         => Object,
+         Property_Name  => "media.filename",
+         Property_Value => Filename,
+         Kind           => Kind,
+         Name           => Name,
+         The_Sound      => File_Sound);
+   end Play_File;
 
    function Create (Name, ID, Icon : String := "") return Context is
       Error : API.Error_Code;
