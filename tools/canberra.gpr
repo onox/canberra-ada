@@ -15,7 +15,6 @@
 --  limitations under the License.
 
 with "config";
-with "external_canberra";
 
 library project Canberra is
 
@@ -37,8 +36,8 @@ library project Canberra is
    package Compiler renames Config.Compiler;
    package Binder renames Config.Binder;
 
---   package Linker is
---      for Linker_Options use ("-lcanberra");
---   end Linker;
+   package Linker is
+      for Linker_Options use ("-lcanberra");
+   end Linker;
 
 end Canberra;

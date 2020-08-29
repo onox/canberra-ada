@@ -64,7 +64,7 @@ In order to build the bindings for libcanberra, you need to have:
 Install the dependencies using apt:
 
 ```sh
-$ sudo apt install gnat-7 gprbuild make libcanberra0
+$ sudo apt install gnat-7 gprbuild make libcanberra-dev
 ```
 
 ## Installation
