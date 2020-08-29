@@ -48,7 +48,21 @@ package Canberra with SPARK_Mode => On is
    --  This subprogram returns immediately and does not wait for the sound
    --  to finish playing.
    --
-   --  Raises Event_Not_Found_Error if the event was not found.
+   --  Raises Not_Found_Error if the event was not found.
+
+   procedure Play_File
+     (Object      : in out Context;
+      Filename    : String;
+      File_Sound  : out Sound;
+      Kind        : Role   := Event;
+      Name        : String := "");
+   --  Play an audio file and return the sound so that it can
+   --  be optionally cancelled
+   --
+   --  This subprogram returns immediately and does not wait for the sound
+   --  to finish playing.
+   --
+   --  Raises Not_Found_Error if the file was not found.
 
    function Is_Playing (Object : Context; Subject : Sound) return Boolean;
    --  Return True if the sound is still playing, False otherwise
@@ -64,7 +78,7 @@ package Canberra with SPARK_Mode => On is
 
    Invalid_Sound_Error : exception;
 
-   Event_Not_Found_Error : exception;
+   Not_Found_Error : exception;
 
 private
 
