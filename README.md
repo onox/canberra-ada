@@ -45,9 +45,7 @@ begin
    Context.Cancel (S2);
 
    --  But wait for the event sound to finish playing
-   loop
-      exit when not Context.Is_Playing (S1);
-   end loop;
+   S1.Await_Finish_Playing;
 end Example;
 ```
 
@@ -66,6 +64,8 @@ Install the dependencies using apt:
 ```sh
 $ sudo apt install gnat-7 gprbuild make libcanberra-dev
 ```
+
+For the PulseAudio backend you can install `libcanberra-pulse`.
 
 ## Installation
 

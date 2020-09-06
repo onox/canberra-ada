@@ -16,7 +16,11 @@
 
 with Interfaces.C;
 
+with Ada.Unchecked_Deallocation;
+
 package body Canberra is
+
+   procedure Free is new Ada.Unchecked_Deallocation (Sound_Status, Sound_Status_Access);
 
    package API is
       type Error_Code is
@@ -62,6 +66,25 @@ package body Canberra is
          Success              => 0);
       for Error_Code'Size use Interfaces.C.int'Size;
 
+      --------------------------------------------------------------------------
+
+      type Property_List is access System.Address
+        with Storage_Size => 0;
+
+      function Create (Handle : in out Property_List) return Error_Code
+        with Import, Convention => C, External_Name => "ca_proplist_create";
+
+      function Destroy (Handle : Property_List) return Error_Code
+        with Import, Convention => C, External_Name => "ca_proplist_destroy";
+
+      function Set
+        (Handle : Property_List;
+         Key    : Interfaces.C.char_array;
+         Value  : Interfaces.C.char_array) return Error_Code
+      with Import, Convention => C, External_Name => "ca_proplist_sets";
+
+      --------------------------------------------------------------------------
+
       function Create (Handle : in out Context_Handle) return Error_Code
         with Import, Convention => C, External_Name => "ca_context_create";
 
@@ -75,29 +98,72 @@ package body Canberra is
          None       : System.Address) return Error_Code
       with Import, Convention => C, External_Name => "ca_context_change_props";
 
-      function Is_Playing
-        (Handle     : Context_Handle;
-         Identifier : ID;
-         Playing    : out Interfaces.C.int) return Error_Code
-      with Import, Convention => C, External_Name => "ca_context_playing";
-
       function Cancel
         (Handle     : Context_Handle;
          Identifier : ID) return Error_Code
       with Import, Convention => C, External_Name => "ca_context_cancel";
 
-      function Play
+      type On_Finish_Callback is access procedure
         (Handle     : Context_Handle;
          Identifier : ID;
-         Property_0 : Interfaces.C.char_array;
-         Value_0    : Interfaces.C.char_array;
-         Property_1 : Interfaces.C.char_array;
-         Value_1    : Interfaces.C.char_array;
-         Property_2 : Interfaces.C.char_array;
-         Value_2    : Interfaces.C.char_array;
-         None       : System.Address) return Error_Code
-      with Import, Convention => C, External_Name => "ca_context_play";
+         Error      : Error_Code;
+         Status     : not null access Sound_Status)
+      with Convention => C;
+
+      function Play_Full
+        (Handle     : Context_Handle;
+         Identifier : ID;
+         Properties : Property_List;
+         On_Finish  : On_Finish_Callback;
+         Status     : not null access Sound_Status) return Error_Code
+      with Import, Convention => C, External_Name => "ca_context_play_full";
    end API;
+
+   -----------------------------------------------------------------------------
+
+   protected body Sound_Status is
+      entry Wait_For_Completion when Current_Status /= Playing is
+      begin
+         null;
+      end Wait_For_Completion;
+
+      procedure Set_Status (Value : Status_Type) is
+      begin
+         if not (case Current_Status is
+                   when Available => Value = Playing,
+                   when Playing   => Value in Finished | Canceled | Failed,
+                   when others    => Value in Available | Playing)
+         then
+            raise Constraint_Error with
+              "Cannot change status of sound from " & Current_Status'Image & " to " & Value'Image;
+         end if;
+
+         Current_Status := Value;
+      end Set_Status;
+
+      function Status return Status_Type is (Current_Status);
+
+      procedure Increment_Ref is
+      begin
+         References := References + 1;
+      end Increment_Ref;
+
+      procedure Decrement_Ref (Is_Zero : out Boolean) is
+      begin
+         References := References - 1;
+         Is_Zero := References = 0;
+      end Decrement_Ref;
+   end Sound_Status;
+
+   function Status (Object : Sound) return Status_Type is (Object.Status.Status);
+
+   procedure Await_Finish_Playing (Object : Sound) is
+   begin
+      Object.Status.Wait_For_Completion;
+   end Await_Finish_Playing;
+
+   function Belongs_To (Object : Sound; Subject : Context'Class) return Boolean
+     is (Object.Handle /= null and Object.Handle = Subject.Handle);
 
    -----------------------------------------------------------------------------
 
@@ -119,31 +185,45 @@ package body Canberra is
       Raise_Error_If_No_Success (Error);
    end Set_Property;
 
-   function Is_Playing (Object : Context; Subject : Sound) return Boolean is
-      Error   : API.Error_Code;
-      Playing : Interfaces.C.int;
-
-      use type Interfaces.C.int;
-   begin
-      --  Verify that the sound belongs to the context
-      if Object.Handle /= Subject.Handle then
-         raise Invalid_Sound_Error with "Sound does not belong to context";
-      end if;
-
-      Error := API.Is_Playing (Object.Handle, Subject.Identifier, Playing);
-      Raise_Error_If_No_Success (Error);
-
-      return Playing /= 0;
-   end Is_Playing;
-
-   procedure Cancel (Object : Context; Subject : Sound) is
+   procedure Set_Property (Properties : API.Property_List; Key, Value : String) is
       Error : API.Error_Code;
    begin
-      --  Verify that the sound belongs to the context
-      if Object.Handle /= Subject.Handle then
-         raise Invalid_Sound_Error with "Sound does not belong to context";
-      end if;
+      Error := API.Set (Properties, Interfaces.C.To_C (Key), Interfaces.C.To_C (Value));
+      Raise_Error_If_No_Success (Error);
+   end Set_Property;
 
+   procedure On_Finish
+     (Handle     : Context_Handle;
+      Identifier : ID;
+      Error      : API.Error_Code;
+      Status     : not null access Sound_Status)
+   with Convention => C;
+
+   procedure On_Finish
+     (Handle     : Context_Handle;
+      Identifier : ID;
+      Error      : API.Error_Code;
+      Status     : not null access Sound_Status)
+   is
+      Is_Zero : Boolean;
+
+      Freeable_Status : Sound_Status_Access := Sound_Status_Access (Status);
+   begin
+      Status.Set_Status
+        (case Error is
+           when API.Success        => Finished,
+           when API.Error_Canceled => Canceled,
+           when others             => Failed);
+
+      Status.Decrement_Ref (Is_Zero);
+      if Is_Zero then
+         Free (Freeable_Status);
+      end if;
+   end On_Finish;
+
+   procedure Cancel (Object : Context; Subject : Sound'Class) is
+      Error : API.Error_Code;
+   begin
       Error := API.Cancel (Object.Handle, Subject.Identifier);
       Raise_Error_If_No_Success (Error);
    end Cancel;
@@ -152,9 +232,7 @@ package body Canberra is
       Event_Sound : Sound;
    begin
       Object.Play (Event_ID, Event_Sound, Event, Event_ID);
-      loop
-         exit when not Object.Is_Playing (Event_Sound);
-      end loop;
+      Event_Sound.Status.Wait_For_Completion;
    end Play;
 
    procedure Play_Internal
@@ -163,22 +241,39 @@ package body Canberra is
       Property_Value : String;
       Kind           : Role;
       Name           : String;
-      The_Sound      : out Sound)
+      The_Sound      : out Sound'Class)
    is
       Error : API.Error_Code;
+      Properties : API.Property_List;
 
       use type API.Error_Code;
+
+      Is_Zero : Boolean;
    begin
-      Error := API.Play (Object.Handle, Object.Next_ID,
-        Interfaces.C.To_C (Property_Name),
-        Interfaces.C.To_C (Property_Value),
-        Interfaces.C.To_C ("media.role"),
-        Interfaces.C.To_C (case Kind is
+      Raise_Error_If_No_Success (API.Create (Properties));
+
+      Set_Property (Properties, Property_Name, Property_Value);
+      Set_Property (Properties, "media.role", (case Kind is
                              when Event => "event",
-                             when Music => "music"),
-        Interfaces.C.To_C ("media.name"),
-        Interfaces.C.To_C (if Name'Length > 0 then Name else Property_Value),
-        System.Null_Address);
+                             when Music => "music"));
+      Set_Property (Properties, "media.name", (if Name'Length > 0 then Name else Property_Value));
+
+      The_Sound.Status.Increment_Ref;
+      The_Sound.Status.Set_Status (Playing);
+
+      Error := API.Play_Full
+        (Object.Handle,
+         Object.Next_ID,
+         Properties,
+         On_Finish'Access,
+         The_Sound.Status);
+
+      if Error /= API.Success then
+         The_Sound.Status.Set_Status (Failed);
+         The_Sound.Status.Decrement_Ref (Is_Zero);
+      end if;
+
+      Raise_Error_If_No_Success (API.Destroy (Properties));
 
       if Error = API.Error_Not_Found then
          raise Not_Found_Error with Property_Value;
@@ -186,14 +281,15 @@ package body Canberra is
 
       Raise_Error_If_No_Success (Error);
 
-      The_Sound := (Object.Handle, Object.Next_ID);
+      The_Sound.Handle     := Object.Handle;
+      The_Sound.Identifier := Object.Next_ID;
       Object.Next_ID := Object.Next_ID + 1;
    end Play_Internal;
 
    procedure Play
      (Object      : in out Context;
       Event_ID    : String;
-      Event_Sound : out Sound;
+      Event_Sound : out Sound'Class;
       Kind        : Role   := Event;
       Name        : String := "")
    is
@@ -209,8 +305,8 @@ package body Canberra is
 
    procedure Play_File
      (Object      : in out Context;
-      Filename    : String;
-      File_Sound  : out Sound;
+      File_Name   : String;
+      File_Sound  : out Sound'Class;
       Kind        : Role   := Event;
       Name        : String := "")
    is
@@ -218,7 +314,7 @@ package body Canberra is
       Play_Internal
         (Object         => Object,
          Property_Name  => "media.filename",
-         Property_Value => Filename,
+         Property_Value => File_Name,
          Kind           => Kind,
          Name           => Name,
          The_Sound      => File_Sound);
@@ -252,6 +348,21 @@ package body Canberra is
          Error := API.Destroy (Object.Handle);
          Raise_Error_If_No_Success (Error);
          Object.Handle := null;
+      end if;
+   end Finalize;
+
+   overriding procedure Initialize (Object : in out Sound) is
+   begin
+      Object.Status := new Sound_Status;
+      Object.Status.Increment_Ref;
+   end Initialize;
+
+   overriding procedure Finalize (Object : in out Sound) is
+      Is_Zero : Boolean;
+   begin
+      Object.Status.Decrement_Ref (Is_Zero);
+      if Is_Zero then
+         Free (Object.Status);
       end if;
    end Finalize;
 
