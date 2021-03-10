@@ -1,3 +1,4 @@
+[![Alire dcf](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/canberra_ada.json)](https://alire.ada.dev/crates/canberra_ada.html)
 [![License](https://img.shields.io/github/license/onox/canberra-ada.svg?color=blue)](https://github.com/onox/canberra-ada/blob/master/LICENSE)
 [![Build status](https://img.shields.io/shippable/5f48c98581e85600069326f5/master.svg)](https://app.shippable.com/github/onox/canberra-ada)
 [![GitHub release](https://img.shields.io/github/release/onox/canberra-ada.svg)](https://github.com/onox/canberra-ada/releases/latest)
@@ -55,48 +56,30 @@ In order to build the bindings for libcanberra, you need to have:
 
  * An Ada 2012 compiler
 
- * GPRBuild and `make`
+ * [Alire][url-alire]
 
 ## Installing dependencies on Ubuntu 18.04 LTS
 
 Install the dependencies using apt:
 
 ```sh
-$ sudo apt install gnat-7 gprbuild make libcanberra-dev
+$ sudo apt install gnat-7 gprbuild libcanberra-dev
 ```
 
-For the PulseAudio backend you can install `libcanberra-pulse`.
+and then install Alire. For the PulseAudio backend you can install `libcanberra-pulse`.
 
-## Installation
+## Using the library
 
-A Makefile is provided to build the source code and tests. Use `make` to build
-the source code:
-
-```
-$ make
-```
-
-You can override CFLAGS if desired. After having compiled the source code,
-the bindings can be installed by executing:
+Use the library in your crates as follows:
 
 ```
-$ make PREFIX=/usr install
-```
-
-Change `PREFIX` to the preferred destination folder, for example `~/.local`.
-
-## Using canberra-ada in your project
-
-Specify the dependency in your \*.gpr project file:
-
-```ada
-with "canberra";
+alr with canberra_ada
 ```
 
 ## Contributing
 
-Read the [contributing guidelines][url-contributing] if you want to add
-a bugfix or an improvement.
+Please read the [contributing guidelines][url-contributing] before opening
+issues or pull requests.
 
 ## License
 
@@ -106,5 +89,6 @@ refers to this license:
 
     SPDX-License-Identifier: Apache-2.0
 
+  [url-alire]: https://alire.ada.dev/
   [url-apache]: https://opensource.org/licenses/Apache-2.0
   [url-contributing]: /CONTRIBUTING.md

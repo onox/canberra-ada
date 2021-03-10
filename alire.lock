@@ -1,0 +1,32 @@
+# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.
+
+[solution]
+[solution.context]
+solved = true
+[[solution.state]]
+crate = "libcanberra"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "~0.30.0"
+[solution.state.release]
+description = "A simple library for playing event sounds"
+licenses = "LGPL-2.1-or-later"
+maintainers = [
+"onox <denkpadje@gmail.com>",
+]
+maintainers-logins = [
+"onox",
+]
+name = "libcanberra"
+notes = "Provided by system package: libcanberra-dev"
+tags = [
+"canberra",
+"audio",
+"sound",
+]
+version = "0.30.0"
+website = "http://0pointer.de/lennart/projects/libcanberra/"
+[solution.state.release.origin]
+url = "system:libcanberra-dev"
+

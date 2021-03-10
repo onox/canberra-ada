@@ -18,7 +18,7 @@ private with System;
 
 private with Ada.Finalization;
 
-package Canberra with SPARK_Mode => On is
+package Canberra is
    pragma Preelaborate;
 
    type Context is tagged limited private;
@@ -94,8 +94,6 @@ package Canberra with SPARK_Mode => On is
    Not_Found_Error : exception;
 
 private
-
-   pragma SPARK_Mode (Off);
 
    type Context_Handle is access System.Address
      with Storage_Size => 0;
