@@ -3,6 +3,7 @@
 [![Build status](https://img.shields.io/shippable/5f48c98581e85600069326f5/master.svg)](https://app.shippable.com/github/onox/canberra-ada)
 [![GitHub release](https://img.shields.io/github/release/onox/canberra-ada.svg)](https://github.com/onox/canberra-ada/releases/latest)
 [![IRC](https://img.shields.io/badge/IRC-%23ada%20on%20freenode-orange.svg)](https://webchat.freenode.net/?channels=ada)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/ada-lang/Lobby)
 
 # canberra-ada
 
