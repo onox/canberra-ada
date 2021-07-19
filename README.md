@@ -1,3 +1,4 @@
+[![Build status](https://github.com/onox/canberra-ada/actions/workflows/build.yaml/badge.svg)](https://github.com/onox/canberra-ada/actions/workflows/build.yaml)
 [![Alire dcf](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/canberra_ada.json)](https://alire.ada.dev/crates/canberra_ada.html)
 [![License](https://img.shields.io/github/license/onox/canberra-ada.svg?color=blue)](https://github.com/onox/canberra-ada/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/onox/canberra-ada.svg)](https://github.com/onox/canberra-ada/releases/latest)
