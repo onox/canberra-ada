@@ -26,7 +26,7 @@ tags = [
 "sound",
 ]
 version = "0.30.0"
-website = "http://0pointer.de/lennart/projects/libcanberra/"
+website = "http://0pointer.net/lennart/projects/libcanberra"
 [solution.state.release.origin]
 url = "system:libcanberra-dev"
 
