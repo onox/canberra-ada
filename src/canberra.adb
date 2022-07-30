@@ -195,17 +195,17 @@ package body Canberra is
    end Set_Property;
 
    procedure On_Finish
-     (Handle     : Context_Handle;
-      Identifier : ID;
-      Error      : API.Error_Code;
-      Status     : not null access Sound_Status)
+     (Unused_Handle     : Context_Handle;
+      Unused_Identifier : ID;
+      Error             : API.Error_Code;
+      Status            : not null access Sound_Status)
    with Convention => C;
 
    procedure On_Finish
-     (Handle     : Context_Handle;
-      Identifier : ID;
-      Error      : API.Error_Code;
-      Status     : not null access Sound_Status)
+     (Unused_Handle     : Context_Handle;
+      Unused_Identifier : ID;
+      Error             : API.Error_Code;
+      Status            : not null access Sound_Status)
    is
       Is_Zero : Boolean;
 
