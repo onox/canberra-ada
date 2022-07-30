@@ -59,23 +59,9 @@ In order to build the bindings for libcanberra, you need to have:
 
  * [Alire][url-alire]
 
-## Installing dependencies on Ubuntu 18.04 LTS
+To use libcanberra, you need to have some backend installed:
 
-Install the dependencies using apt:
-
-```sh
-$ sudo apt install gnat-7 gprbuild libcanberra-dev
-```
-
-and then install Alire. For the PulseAudio backend you can install `libcanberra-pulse`.
-
-## Using the library
-
-Use the library in your crates as follows:
-
-```
-alr with canberra_ada
-```
+ * `libcanberra-pulse` for the PulseAudio backend
 
 ## Contributing
 
