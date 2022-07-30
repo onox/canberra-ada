@@ -23,6 +23,8 @@ package body Canberra is
    procedure Free is new Ada.Unchecked_Deallocation (Sound_Status, Sound_Status_Access);
 
    package API is
+      pragma Linker_Options ("-lcanberra");
+
       type Error_Code is
         (Error_Disconnected,
          Error_Forked,
