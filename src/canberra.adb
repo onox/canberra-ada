@@ -157,11 +157,11 @@ package body Canberra is
       end Decrement_Ref;
    end Sound_Status;
 
-   function Status (Object : Sound) return Status_Type is (Object.Status.Status);
+   function Status (Object : Sound) return Status_Type is (Object.Sound_Status.Status);
 
    procedure Await_Finish_Playing (Object : Sound) is
    begin
-      Object.Status.Wait_For_Completion;
+      Object.Sound_Status.Wait_For_Completion;
    end Await_Finish_Playing;
 
    function Belongs_To (Object : Sound; Subject : Context'Class) return Boolean
@@ -234,7 +234,7 @@ package body Canberra is
       Event_Sound : Sound;
    begin
       Object.Play (Event_ID, Event_Sound, Event, Event_ID);
-      Event_Sound.Status.Wait_For_Completion;
+      Event_Sound.Sound_Status.Wait_For_Completion;
    end Play;
 
    procedure Play_Internal
@@ -260,19 +260,19 @@ package body Canberra is
                              when Music => "music"));
       Set_Property (Properties, "media.name", (if Name'Length > 0 then Name else Property_Value));
 
-      The_Sound.Status.Increment_Ref;
-      The_Sound.Status.Set_Status (Playing);
+      The_Sound.Sound_Status.Increment_Ref;
+      The_Sound.Sound_Status.Set_Status (Playing);
 
       Error := API.Play_Full
         (Object.Handle,
          Object.Next_ID,
          Properties,
          On_Finish'Access,
-         The_Sound.Status);
+         The_Sound.Sound_Status);
 
       if Error /= API.Success then
-         The_Sound.Status.Set_Status (Failed);
-         The_Sound.Status.Decrement_Ref (Is_Zero);
+         The_Sound.Sound_Status.Set_Status (Failed);
+         The_Sound.Sound_Status.Decrement_Ref (Is_Zero);
       end if;
 
       Raise_Error_If_No_Success (API.Destroy (Properties));
@@ -355,16 +355,16 @@ package body Canberra is
 
    overriding procedure Initialize (Object : in out Sound) is
    begin
-      Object.Status := new Sound_Status;
-      Object.Status.Increment_Ref;
+      Object.Sound_Status := new Sound_Status;
+      Object.Sound_Status.Increment_Ref;
    end Initialize;
 
    overriding procedure Finalize (Object : in out Sound) is
       Is_Zero : Boolean;
    begin
-      Object.Status.Decrement_Ref (Is_Zero);
+      Object.Sound_Status.Decrement_Ref (Is_Zero);
       if Is_Zero then
-         Free (Object.Status);
+         Free (Object.Sound_Status);
       end if;
    end Finalize;
 

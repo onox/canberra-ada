@@ -134,9 +134,9 @@ private
 
       Identifier : ID := ID'Last;
 
-      Status : Sound_Status_Access := null;
+      Sound_Status : Sound_Status_Access := null;
    end record
-     with Type_Invariant => Sound.Status /= null;
+     with Type_Invariant => Sound.Sound_Status /= null;
 
    overriding procedure Initialize (Object : in out Sound);
 
